@@ -47,6 +47,8 @@ namespace LuisQnaBot
 
             // Add all Dialogs we are gonna use
             services.AddDialogs();
+
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

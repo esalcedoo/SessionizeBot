@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LuisQnaBot
+namespace LuisQnaBot.BotBuilderMiddlewares
 {
     public class LuisRecognizerMiddleware : IMiddleware
     {
@@ -26,7 +26,7 @@ namespace LuisQnaBot
                 var utterance = turnContext.Activity.AsMessageActivity().Text;
                 if (!string.IsNullOrWhiteSpace(utterance))
                 {
-                    RecognizerResult luisRecognizerResult = 
+                    RecognizerResult luisRecognizerResult =
                         await _luisRecognizer.RecognizeAsync(turnContext, CancellationToken.None).ConfigureAwait(false);
 
                     turnContext.TurnState.Add("LuisRecognizerResult", luisRecognizerResult);

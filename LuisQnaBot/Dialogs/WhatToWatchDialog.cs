@@ -26,17 +26,16 @@ namespace LuisQnaBot.Dialogs
         {
             RecognizerResult luisResult = dc.Context.TurnState.Get<RecognizerResult>("LuisRecognizerResult");
             DateTime time = luisResult.GetDateTime();
-            if (time == default) time = DateTime.UtcNow.AddHours(2);
+            if (time == default) time = new DateTime(2021,4,15,10,0,0);
 
             //TODO QUITAR AUMENTAR TIEMPO
-            IEnumerable<Session> sessions = await _sessionizeService.WhatToWatchAsync(time.AddDays(1));
+            IEnumerable<Session> sessions = await _sessionizeService.WhatToWatchAsync(time);
 
             IMessageActivity activityMessage = BuildActivityMessage(sessions);
 
             await dc.Context.SendActivityAsync(activityMessage, cancellationToken);
-            await base.EndDialogAsync(dc.Context, dc.ActiveDialog, DialogReason.EndCalled);
 
-            return null;
+            return await dc.EndDialogAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
         }
 
         private static IMessageActivity BuildActivityMessage(IEnumerable<Session> sessions)

@@ -1,8 +1,10 @@
 ﻿using LuisQnaBot.Models;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 
 namespace LuisQnaBot.Services.Sessionize
@@ -10,10 +12,12 @@ namespace LuisQnaBot.Services.Sessionize
     public class SessionizeService
     {
         private readonly HttpClient _client;
+        private readonly IMemoryCache _memoryCache;
 
-        public SessionizeService(HttpClient client)
+        public SessionizeService(HttpClient client, IMemoryCache memoryCache)
         {
             _client = client;
+            _memoryCache = memoryCache;
         }
 
         public async Task<IEnumerable<Session>> WhatToWatchAsync(DateTime dateTime)
@@ -40,7 +44,7 @@ namespace LuisQnaBot.Services.Sessionize
 
             if (!string.IsNullOrEmpty(name))
                 speakers = speakers
-                       .Where(speaker => speaker.FullName.Contains(name,StringComparison.InvariantCultureIgnoreCase));
+                       .Where(speaker => speaker.FullName.Contains(name, StringComparison.InvariantCultureIgnoreCase));
 
             if (dateTime > DateTime.Now.AddDays(-1))
                 speakers = speakers
@@ -67,18 +71,23 @@ namespace LuisQnaBot.Services.Sessionize
 
             if (response.IsSuccessStatusCode)
             {
-                speakers = await response.Content.ReadAsAsync<List<Speaker>>();
-                foreach (Speaker speaker in speakers)
+                speakers = await _memoryCache.GetOrCreateAsync(route, async entry =>
                 {
+                    //entry.SetOptions(new MemoryCacheEntryOptions() { } )
+                    speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
 
-                    var sessionIds = speaker.Sessions.Select(s => s.Id).ToList();
-                    speaker.Sessions.Clear();
-
-                    foreach (var sessionId in sessionIds)
+                    foreach (Speaker speaker in speakers)
                     {
-                        speaker.Sessions.Add(await GetSessionByIdAsync(sessionId));
+                        var sessionIds = speaker.Sessions.Select(s => s.Id).ToList();
+                        speaker.Sessions.Clear();
+
+                        foreach (var sessionId in sessionIds)
+                        {
+                            speaker.Sessions.Add(await GetSessionByIdAsync(sessionId));
+                        }
                     }
-                }
+                    return speakers;
+                });
             }
             return speakers;
         }
@@ -92,7 +101,11 @@ namespace LuisQnaBot.Services.Sessionize
 
             if (response.IsSuccessStatusCode)
             {
-                var sessionsResponse = await response.Content.ReadAsAsync<List<SessionResponse>>();
+                var sessionsResponse = await _memoryCache.GetOrCreateAsync(route, async entry =>
+                {
+                    return await response.Content.ReadFromJsonAsync<List<SessionResponse>>();
+                });
+
                 sessions = sessionsResponse.FirstOrDefault()?.Sessions;
                 foreach (Session session in sessions)
                 {
@@ -118,7 +131,7 @@ namespace LuisQnaBot.Services.Sessionize
 
             if (response.IsSuccessStatusCode)
             {
-                List<Speaker> speakers = await response.Content.ReadAsAsync<List<Speaker>>();
+                List<Speaker> speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
                 speaker = speakers.FirstOrDefault(s => s.Id.Equals(id, StringComparison.InvariantCultureIgnoreCase));
             }
             return speaker;
@@ -133,7 +146,7 @@ namespace LuisQnaBot.Services.Sessionize
 
             if (response.IsSuccessStatusCode)
             {
-                List<Session> sessions = await response.Content.ReadAsAsync<List<Session>>();
+                List<Session> sessions = await response.Content.ReadFromJsonAsync<List<Session>>();
                 session = sessions.FirstOrDefault(s => s.Id == id);
             }
             return session;

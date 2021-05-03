@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
+﻿using Luis;
+using Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime.Models;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.AI.Luis;
 using Microsoft.Recognizers.Text.DataTypes.TimexExpression;
@@ -13,18 +14,18 @@ namespace LuisQnaBot.Services.LUIS
     {
         public static DateTime GetDateTime(this RecognizerResult recognizerResult)
         {
-            var luisResponse = new LuisResponse();
+            var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
 
             DateTime dateTime;
-            if (TryFindTimeAdverPhrase(luisResponse, out dateTime) || TryFindDateTime(luisResponse, out dateTime))
+            if (TryFindDateTime(luisResponse, out dateTime))
             {
                 return dateTime;
             }
             return default;
         }
 
-        public static bool TryFindDateTime(LuisResponse luisResponse, out DateTime dateTime)
+        public static bool TryFindDateTime(SessionizeLuisModel luisResponse, out DateTime dateTime)
         {
             DateTimeSpec dateTimeSpec = luisResponse.Entities.datetime?.FirstOrDefault();
 
@@ -54,38 +55,38 @@ namespace LuisQnaBot.Services.LUIS
             return false;
         }
 
-        public static bool TryFindTimeAdverPhrase(LuisResponse luisResponse, out DateTime dateTime)
-        {
-            dateTime = default;
-            if (int.TryParse(luisResponse.Entities.TimeAdverbPhrase?[0][0], out int hour))
-            {
-                dateTime = new DateTime(
-                        year: DateTime.UtcNow.Year,
-                        month: DateTime.UtcNow.Month,
-                        day: DateTime.UtcNow.Day,
-                        hour: hour,
-                        minute: 0,
-                        second: 0
-                        );
+        //public static bool TryFindTimeAdverPhrase(SessionizeLuisModel luisResponse, out DateTime dateTime)
+        //{
+        //    dateTime = default;
+        //    if (int.TryParse(luisResponse.Entities.TimeAdverbPhrase?[0][0], out int hour))
+        //    {
+        //        dateTime = new DateTime(
+        //                year: DateTime.UtcNow.Year,
+        //                month: DateTime.UtcNow.Month,
+        //                day: DateTime.UtcNow.Day,
+        //                hour: hour,
+        //                minute: 0,
+        //                second: 0
+        //                );
 
-                return true;
-            }
-            return false;
-        }
+        //        return true;
+        //    }
+        //    return false;
+        //}
     
         public static string GetSpeakerName(this RecognizerResult recognizerResult)
         {
-            var luisResponse = new LuisResponse();
+            var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
 
-            string name = luisResponse.Entities.SpeakerName?[0][0];
+            string name = luisResponse.Entities.personName?[0];
 
             return name;
         }
 
         public static string GetTrack(this RecognizerResult recognizerResult)
         {
-            var luisResponse = new LuisResponse();
+            var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
 
             string name = luisResponse.Entities.Track?[0][0];
