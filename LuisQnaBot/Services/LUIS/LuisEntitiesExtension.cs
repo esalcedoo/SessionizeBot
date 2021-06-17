@@ -12,7 +12,7 @@ namespace LuisQnaBot.Services.LUIS
 {
     public static class LuisEntitiesExtension
     {
-        public static DateTime GetDateTime(this RecognizerResult recognizerResult)
+        public static DateTime? GetDateTime(this RecognizerResult recognizerResult)
         {
             var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
@@ -22,7 +22,7 @@ namespace LuisQnaBot.Services.LUIS
             {
                 return dateTime;
             }
-            return default;
+            return null;
         }
 
         public static bool TryFindDateTime(SessionizeLuisModel luisResponse, out DateTime dateTime)
@@ -79,7 +79,7 @@ namespace LuisQnaBot.Services.LUIS
             var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
 
-            string name = luisResponse.Entities.personName?[0];
+            string name = luisResponse.Entities.Speaker?[0][0];
 
             return name;
         }
@@ -89,7 +89,7 @@ namespace LuisQnaBot.Services.LUIS
             var luisResponse = new SessionizeLuisModel();
             luisResponse.Convert(recognizerResult);
 
-            string name = luisResponse.Entities.Track?[0][0];
+            string name = luisResponse.Entities.track?[0][0];
 
             return name;
         }

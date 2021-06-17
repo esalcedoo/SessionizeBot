@@ -25,14 +25,21 @@ namespace LuisQnaBot.Models
                 text: string.Join("\n", Description));
 
             if (Speakers?.Any() ?? false)
-                hero.Images = new List<CardImage>()
+            {
+                hero.Subtitle = string.Empty;
+                hero.Images = new List<CardImage>();
+                foreach (var speaker in Speakers)
                 {
-                    new CardImage()
+                    if (!string.IsNullOrEmpty(hero.Subtitle)) hero.Subtitle += " - ";
+                    hero.Subtitle += $"{speaker.FirstName} {speaker.LastName}";
+
+                    hero.Images.Add(new CardImage()
                     {
-                        Url = Speaker.ProfilePicture,
-                        Alt = Speaker.TagLine
-                    }
-                };
+                        Url = speaker.ProfilePicture,
+                        Alt = speaker.TagLine
+                    });
+                }
+            }
 
             return hero;
         }

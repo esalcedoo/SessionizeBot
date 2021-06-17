@@ -1,5 +1,4 @@
-﻿using LuisQnaBot;
-using LuisQnaBot.IntentHandlers;
+﻿using LuisQnaBot.BotBuilderMiddlewares;
 using LuisQnaBot.Services.LUIS;
 using Microsoft.Bot.Builder.AI.Luis;
 using Microsoft.Bot.Configuration;
@@ -13,8 +12,6 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddLuisService(this IServiceCollection services, Action<LuisApplication> setup = null)
         {
-            LuisService luisService = new LuisService();
-
             services.AddSingleton<LuisRecognizerMiddleware>();
             services.AddOptions();
             if (setup != null) services.Configure<LuisApplication>(setup);

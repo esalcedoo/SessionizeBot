@@ -1,12 +1,14 @@
 ﻿using Microsoft.Bot.Builder.Dialogs.Choices;
 using Microsoft.Bot.Schema;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LuisQnaBot.Models
 {
     public class Speaker
     {
         public string Id { get; set; }
+        public string Name { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Bio { get; set; }
@@ -18,10 +20,11 @@ namespace LuisQnaBot.Models
 
         public HeroCard ToCard()
         {
+            var session = Sessions.FirstOrDefault();
             var hero = new HeroCard(
                 title: FullName,
-                subtitle: TagLine,
-                text: string.Join("\n", Bio),
+                subtitle: $"{session.Room} - {session.StartsAt.ToString("ddd d MMM hh:mm")}",
+                text: string.Join("\n", TagLine, Bio),
                 images: new List<CardImage>()
                 {
                     new CardImage()

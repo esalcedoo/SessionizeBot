@@ -1,4 +1,5 @@
 ﻿using LuisQnaBot.Models;
+using LuisQnaBot.Utils;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
@@ -38,13 +39,34 @@ namespace LuisQnaBot.Services.Sessionize
             }
         }
 
-        public async Task<IEnumerable<Speaker>> WhoIsSHeAsync(string name = default, DateTime dateTime = default, string track = default)
+        public async Task<IEnumerable<Session>> WhatToWatchAsync(string track)
+        {
+            IEnumerable<Session> sessions = await GetSessionsAsync();
+
+            return sessions
+            .Where(session => session.Room == track);
+        }
+
+        public async Task<IEnumerable<Speaker>> WhoIsSHeAsync(string fullName, string name = default, DateTime? dateTime = default, string track = default)
         {
             IEnumerable<Speaker> speakers = await GetSpeakersAsync();
 
             if (!string.IsNullOrEmpty(name))
-                speakers = speakers
-                       .Where(speaker => speaker.FullName.Contains(name, StringComparison.InvariantCultureIgnoreCase));
+            {
+                if (speakers.Any(speaker => string.Equals(speaker.FullName, fullName)))
+                {
+                    return speakers.Where(speaker => string.Equals(speaker.FullName, fullName)).ToList();
+                }
+                else
+                {
+                    speakers = speakers
+                           .Where(speaker =>
+                           {
+                               var speakerWithOutAccentMarks = speaker.FullName.RemoveAccentMark();
+                               return speakerWithOutAccentMarks.Contains(name.RemoveAccentMark());
+                           });
+                }
+            }
 
             if (dateTime > DateTime.Now.AddDays(-1))
                 speakers = speakers
@@ -73,8 +95,8 @@ namespace LuisQnaBot.Services.Sessionize
             {
                 speakers = await _memoryCache.GetOrCreateAsync(route, async entry =>
                 {
-                    //entry.SetOptions(new MemoryCacheEntryOptions() { } )
-                    speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
+                //entry.SetOptions(new MemoryCacheEntryOptions() { } )
+                speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
 
                     foreach (Speaker speaker in speakers)
                     {
@@ -92,7 +114,7 @@ namespace LuisQnaBot.Services.Sessionize
             return speakers;
         }
 
-        internal async Task<IEnumerable<Session>> GetSessionsAsync()
+        internal async Task<IEnumerable<Session>> GetSessionsAsync(bool getSpeakers = true)
         {
             IEnumerable<Session> sessions = new List<Session>();
             string route = "Sessions";
@@ -103,21 +125,22 @@ namespace LuisQnaBot.Services.Sessionize
             {
                 var sessionsResponse = await _memoryCache.GetOrCreateAsync(route, async entry =>
                 {
-                    return await response.Content.ReadFromJsonAsync<List<SessionResponse>>();
+                    var kk = await response.Content.ReadFromJsonAsync<List<SessionResponse>>();
+                    return kk;
                 });
 
                 sessions = sessionsResponse.FirstOrDefault()?.Sessions;
-                foreach (Session session in sessions)
-                {
-
-                    var speakerIds = session.Speakers.Select(s => s.Id);
-                    session.Speakers.Clear();
-
-                    foreach (var speakerId in speakerIds)
+                if (getSpeakers)
+                    foreach (Session session in sessions)
                     {
-                        session.Speakers.Add(await GetSpeakerByIdAsync(speakerId));
+                        var speakerIds = session.Speakers.Select(s => s.Id).ToList();
+                        session.Speakers.Clear();
+
+                        foreach (var speakerId in speakerIds)
+                        {
+                            session.Speakers.Add(await GetSpeakerByIdAsync(speakerId));
+                        }
                     }
-                }
             }
             return sessions;
         }
@@ -139,16 +162,9 @@ namespace LuisQnaBot.Services.Sessionize
 
         internal async Task<Session> GetSessionByIdAsync(int id)
         {
-            Session session = null;
-            string route = "Sessions";
+            IEnumerable<Session> sessions = await GetSessionsAsync(false);
+            Session session = sessions.FirstOrDefault(s => s.Id == id);
 
-            HttpResponseMessage response = await _client.GetAsync(route);
-
-            if (response.IsSuccessStatusCode)
-            {
-                List<Session> sessions = await response.Content.ReadFromJsonAsync<List<Session>>();
-                session = sessions.FirstOrDefault(s => s.Id == id);
-            }
             return session;
         }
     }

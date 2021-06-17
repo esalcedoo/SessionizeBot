@@ -8,7 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddDialogs(this IServiceCollection services)
         {
             services.AddTransient<MainDialog>();
-            services.AddSingleton<QnADialog>();
+            services.AddSingleton<QnAMakerBaseDialog>();
             services.AddSingleton<WhatToWatchDialog>();
             services.AddSingleton<WhoIsSHeDialog>();
             return services;

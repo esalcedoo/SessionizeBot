@@ -15,11 +15,11 @@ namespace LuisQnaBot.Bots
         private ConversationState _conversationState;
         private readonly IEnumerable<ILUISeIntentHandler> _intentHandlers;
         private readonly T _dialog;
-        private readonly QnADialog _qnADialog;
+        private readonly QnAMakerBaseDialog _qnADialog;
         private readonly WhatToWatchDialog _whatToWatchDialog;
         private readonly WhoIsSHeDialog _whoIsSHeDialog;
 
-        public Bot(ConversationState conversationState, IEnumerable<ILUISeIntentHandler> intentHandlers, T dialog, QnADialog qnADialog, WhatToWatchDialog whatToWatchDialog, WhoIsSHeDialog whoIsSHeDialog)
+        public Bot(ConversationState conversationState, IEnumerable<ILUISeIntentHandler> intentHandlers, T dialog, QnAMakerBaseDialog qnADialog, WhatToWatchDialog whatToWatchDialog, WhoIsSHeDialog whoIsSHeDialog)
         {
             _conversationState = conversationState;
             _intentHandlers = intentHandlers;
@@ -72,7 +72,7 @@ namespace LuisQnaBot.Bots
             {
                 if (member.Id != turnContext.Activity.Recipient.Id)
                 {
-                    await turnContext.SendActivityAsync(MessageFactory.Text($"Hello NetCoreConf!"), cancellationToken);
+                    await turnContext.SendActivityAsync(MessageFactory.Text($"Hola anfitriona!"), cancellationToken);
                 }
             }
         }

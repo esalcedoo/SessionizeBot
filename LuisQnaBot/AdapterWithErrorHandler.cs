@@ -1,4 +1,5 @@
-﻿using Microsoft.Bot.Builder.Integration.AspNet.Core;
+﻿using LuisQnaBot.BotBuilderMiddlewares;
+using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +18,7 @@ namespace LuisQnaBot
                 logger.LogError($"Exception caught : {exception.Message}");
 
                 // Send a catch-all apology to the user.
-                await turnContext.SendActivityAsync("Sorry, it looks like something went wrong.");
+                await turnContext.SendActivityAsync("Se ha producido un error.");
             };
         }
     }

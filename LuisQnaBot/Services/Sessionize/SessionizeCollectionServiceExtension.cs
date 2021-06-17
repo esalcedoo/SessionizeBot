@@ -12,7 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddHttpClient<SessionizeService>(client =>
             {
-                client.BaseAddress = new Uri("https://sessionize.com/api/v2/*******/view/");
+                client.BaseAddress = new Uri("https://sessionize.com/api/v2/9af7pt6b/view/");
                 client.DefaultRequestHeaders.Add(System.Net.HttpRequestHeader.Accept.ToString(), "application/json");
             }
             );

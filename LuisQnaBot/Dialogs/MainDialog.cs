@@ -14,9 +14,9 @@ namespace LuisQnaBot.Dialogs
         private readonly IEnumerable<ILUISeIntentHandler> _intentHandlers;
         private readonly WhoIsSHeDialog _whoIsSHeDialog;
         private readonly WhatToWatchDialog _whatToWatchDialog;
-        private readonly QnADialog _qnADialog;
+        private readonly QnAMakerBaseDialog _qnADialog;
 
-        public MainDialog(IEnumerable<ILUISeIntentHandler> intentHandlers, WhoIsSHeDialog whoIsSHeDialog, WhatToWatchDialog whatToWatchDialog, QnADialog qnADialog):base(nameof(MainDialog))
+        public MainDialog(IEnumerable<ILUISeIntentHandler> intentHandlers, WhoIsSHeDialog whoIsSHeDialog, WhatToWatchDialog whatToWatchDialog, QnAMakerBaseDialog qnADialog):base(nameof(MainDialog))
         {
             _intentHandlers = intentHandlers;
             _whoIsSHeDialog = whoIsSHeDialog;

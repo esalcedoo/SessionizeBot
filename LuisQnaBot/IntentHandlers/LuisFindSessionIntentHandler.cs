@@ -2,17 +2,20 @@
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace LuisQnaBot.IntentHandlers
 {
-    public class LuisWhoIsSHeIntentHandler : ILUISeIntentHandler
+    public class LuisFindSessionIntentHandler : ILUISeIntentHandler
     {
         private readonly ConversationState _conversationState;
         private readonly WhoIsSHeDialog _whoIsSHeDialog;
 
-        public LuisWhoIsSHeIntentHandler(ConversationState conversationState, WhoIsSHeDialog whoIsSHeDialog)
+        public LuisFindSessionIntentHandler(ConversationState conversationState, WhoIsSHeDialog whoIsSHeDialog)
         {
             _conversationState = conversationState;
             _whoIsSHeDialog = whoIsSHeDialog;
@@ -30,7 +33,8 @@ namespace LuisQnaBot.IntentHandlers
                             _conversationState.CreateProperty<DialogState>(nameof(DialogState)), cancellationToken);
         }
 
-        public bool IsValid(string intent) => intent == "WhoIsShe";
+        //TODO - NOT IMPLEMENTED FindSessionDialog YET
+        public bool IsValid(string intent) => intent == "FindSession";
 
     }
 }

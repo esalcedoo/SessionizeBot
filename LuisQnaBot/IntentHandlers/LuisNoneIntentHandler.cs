@@ -13,9 +13,9 @@ namespace LuisQnaBot.Services.LUIS
     public class LuisNoneHandler : ILUISeIntentHandler
     {
         private readonly ConversationState _conversationState;
-        private readonly QnADialog _qnADialog;
+        private readonly QnAMakerBaseDialog _qnADialog;
 
-        public LuisNoneHandler(ConversationState conversationState, QnADialog qnADialog)
+        public LuisNoneHandler(ConversationState conversationState, QnAMakerBaseDialog qnADialog)
         {
             _conversationState = conversationState;
             _qnADialog = qnADialog;

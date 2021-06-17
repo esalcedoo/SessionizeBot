@@ -1,6 +1,5 @@
 ﻿using LuisQnaBot.Bots;
 using LuisQnaBot.Dialogs;
-using LuisQnaBot.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
@@ -49,6 +48,14 @@ namespace LuisQnaBot
             services.AddDialogs();
 
             services.AddMemoryCache();
+            services.AddControllers();
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin().AllowAnyHeader();
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,7 +70,11 @@ namespace LuisQnaBot
                 app.UseHsts();
             }
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
             app.UseRouting();
+            app.UseCors();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.Map("api/messages", async context =>
@@ -73,6 +84,7 @@ namespace LuisQnaBot
 
                     await adapter.ProcessAsync(context.Request, context.Response, bot);
                 });
+                endpoints.MapControllers();
             });
         }
     }

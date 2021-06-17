@@ -10,6 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<ILUISeIntentHandler, LuisWhatToWatchIntentHandler>();
             services.AddTransient<ILUISeIntentHandler, LuisNoneHandler>();
             services.AddTransient<ILUISeIntentHandler, LuisWhoIsSHeIntentHandler>();
+            services.AddTransient<ILUISeIntentHandler, LuisFindSessionIntentHandler>();
             return services;
         }
     }
