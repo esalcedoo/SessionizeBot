@@ -1,4 +1,5 @@
-﻿using LuisQnaBot.Models;
+﻿using LuisQnaBot.Dialogs.StateModels;
+using LuisQnaBot.Models;
 using LuisQnaBot.Services;
 using LuisQnaBot.Services.LUIS;
 using LuisQnaBot.Services.Sessionize;
@@ -22,33 +23,42 @@ namespace LuisQnaBot.Dialogs
         static readonly string[] _tracks = new[] { "Desarrollo", "Power Platform", "Economía", "Power Bi", "Datos", "Motivación" };
 
         private readonly SessionizeService _sessionizeService;
+        private readonly IStatePropertyAccessor<WhatToWatchUserState> _WhatToWatchUserStatePropertyAccessor;
 
-        public WhatToWatchDialog(SessionizeService sessionizeService) : base(nameof(WhatToWatchDialog))
+        public WhatToWatchDialog(SessionizeService sessionizeService, ConversationState conversationState) : base(nameof(WhatToWatchDialog))
         {
             _sessionizeService = sessionizeService;
+            _WhatToWatchUserStatePropertyAccessor = conversationState.CreateProperty<WhatToWatchUserState>(nameof(WhatToWatchUserState));
+
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog),
                 new List<WaterfallStep>()
                 {
-                    GetTime,
+                    GetDateTime,
                     PrintTracks,
-                    GetSessions,
+                    GetTrack,
                     PrintSessions
                 }));
             AddDialog(new ChoicePrompt(nameof(ChoicePrompt)));
             InitialDialogId = nameof(WaterfallDialog);
         }
 
-
-        private async Task<DialogTurnResult> GetTime(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        private async Task<DialogTurnResult> GetDateTime(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             RecognizerResult luisResult = stepContext.Context.TurnState.Get<RecognizerResult>("LuisRecognizerResult");
-            DateTime? time = luisResult.GetDateTime();
-            return await stepContext.NextAsync(time, cancellationToken: cancellationToken);
+
+            WhatToWatchUserState whatToWatchUserState = new WhatToWatchUserState() { DateTime = luisResult.GetDateTime() };
+            await _WhatToWatchUserStatePropertyAccessor.SetAsync(stepContext.Context, whatToWatchUserState, cancellationToken);
+            return await stepContext.NextAsync(whatToWatchUserState, cancellationToken: cancellationToken);
         }
 
         private async Task<DialogTurnResult> PrintTracks(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            if (stepContext.Result is not DateTime)
+            WhatToWatchUserState whatToWatchUserState = stepContext.Result as WhatToWatchUserState;
+
+            RecognizerResult luisResult = stepContext.Context.TurnState.Get<RecognizerResult>("LuisRecognizerResult");
+            string track = luisResult.GetTrack();
+
+            if (track is null && whatToWatchUserState.DateTime == null)
             {
                 string text = "¿De qué track te lo muestro?";
 
@@ -59,26 +69,33 @@ namespace LuisQnaBot.Dialogs
                 };
                 return await stepContext.PromptAsync(nameof(ChoicePrompt), promptOptions, cancellationToken);
             }
-            return await stepContext.NextAsync(stepContext.Result, cancellationToken: cancellationToken);
+            return await stepContext.NextAsync(track, cancellationToken: cancellationToken);
 
         }
-        private async Task<DialogTurnResult> GetSessions(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+
+        private async Task<DialogTurnResult> GetTrack(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            IEnumerable<Session> sessions = default;
-            if (stepContext.Result is DateTime time)
+            string track = null;
+            if (stepContext.Result is FoundChoice foundChoice)
             {
-                sessions = await _sessionizeService.WhatToWatchAsync(time);
+                track = foundChoice.Value;
             }
-            if (stepContext.Result is FoundChoice track)
+            if (stepContext.Result is string trackResult)
             {
-                sessions = await _sessionizeService.WhatToWatchAsync(track.Value);
+                track = trackResult;
             }
-            return await stepContext.NextAsync(sessions, cancellationToken: cancellationToken);
+            WhatToWatchUserState whatToWatchUserState = await _WhatToWatchUserStatePropertyAccessor.GetAsync(stepContext.Context, null, cancellationToken);
+            whatToWatchUserState.Track = track;
+            return await stepContext.NextAsync(whatToWatchUserState, cancellationToken: cancellationToken);
         }
 
         private async Task<DialogTurnResult> PrintSessions(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            IMessageActivity activityMessage = BuildActivityMessage(stepContext.Result as IEnumerable<Session>);
+            WhatToWatchUserState whatToWatchUserState = stepContext.Result as WhatToWatchUserState;
+
+            IEnumerable<Session> sessions = await _sessionizeService.WhatToWatchAsync(whatToWatchUserState.DateTime, whatToWatchUserState.Track);
+            
+            IMessageActivity activityMessage = BuildActivityMessage(sessions);
             await stepContext.Context.SendActivityAsync(activityMessage, cancellationToken);
 
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken).ConfigureAwait(false);

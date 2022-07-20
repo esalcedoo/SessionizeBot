@@ -38,7 +38,11 @@ namespace LuisQnaBot.Dialogs
         {
             IEnumerable<Speaker> speakers = await GetSpeakers(stepContext);
             if (speakers.Count() > 1)
-                return await stepContext.PromptAsync(nameof(ChoicePrompt), GetChoicePrompOptions(speakers));
+                return await stepContext.PromptAsync(nameof(ChoicePrompt), new PromptOptions()
+                {
+                    Prompt = MessageFactory.Text("¿A cuál de ellas te refieres?", inputHint: InputHints.ExpectingInput),
+                    Choices = ChoiceFactory.ToChoices(speakers.Select(s=>s.FullName).ToList())
+                });
             else
                 return await stepContext.NextAsync(speakers.FirstOrDefault(), cancellationToken);
         }
@@ -72,21 +76,12 @@ namespace LuisQnaBot.Dialogs
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
 
-        private PromptOptions GetChoicePrompOptions(IEnumerable<Speaker> speakers)
-        {
-            return new PromptOptions()
-            {
-                Prompt = MessageFactory.Text("¿A cuál de ellas te refieres?", inputHint: InputHints.ExpectingInput),
-                Choices = speakers.Select(s => s.ToChoice()).ToList()
-            };
-        }
-
         private static IMessageActivity BuildActivityMessage(Speaker speaker)
         {
             IMessageActivity activityMessage;
             if (speaker != null)
             {
-                activityMessage = MessageFactory.Attachment(speaker.ToCard().ToAttachment(), "Aquí tienes:");
+                activityMessage = MessageFactory.Attachment(speaker.ToCard().ToAttachment(), "Con ese nombre he encontrado a esta ponente:");
             }
             else
             {

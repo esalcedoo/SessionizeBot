@@ -34,13 +34,13 @@ const parameters = {
         backgroundColor: '#06038D',
         color: '#FFFFFF',
         imageUrl: 'https://1.bp.blogspot.com/-7UnZsiDpIac/X6htFmgCpjI/AAAAAAAAAE0/kGIWiO74lPIdnGqyXkHEaTSBwGB6wRK5gCLcBGAsYHQ/s1600/LogoW4TTnowords.png',
-        height: '80px'
+        height: '40px'
     },
     directlineTokenUrl: botUrl + '/api/directline/generateToken/',
     directlineReconnectTokenUrl: botUrl + '/api/directline/reconnect/',
     //speechTokenUrl: botUrl + '/api/directline/speech/generatetoken/', //botframework-webchat: "authorizationToken", "region", and "subscriptionKey" are deprecated and will be removed on or after 2020-12-17. Please use "credentials" instead.
     //selectVoice: (voices, activity) => selectVoice(voices, activity),
-    chatIconMessage: '',
+    chatIconMessage: '¡Consulta la agenda!',
     language: 'es',
     locale: "es-ES"
 }
@@ -84,7 +84,7 @@ scriptElement.onload = function () {
         parameters.language = jsParams.get('locale');
     }
     if (parameters.language.startsWith('en')) {
-        parameters.chatIconMessage = chatIconMessageEn;
+        parameters.chatIconMessage = chatIconMessageEs;
     }
     else {
         parameters.chatIconMessage = chatIconMessageEs;

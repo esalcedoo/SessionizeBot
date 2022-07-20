@@ -21,7 +21,6 @@ namespace LuisQnaBot.Models
         {
             var hero = new HeroCard(
                 title: Title,
-                subtitle: Room,
                 text: string.Join("\n", Description));
 
             if (Speakers?.Any() ?? false)
@@ -40,7 +39,7 @@ namespace LuisQnaBot.Models
                     });
                 }
             }
-
+            hero.Subtitle += $"- {StartsAt.ToString("ddd d MMM hh:mm")} - {Room}";
             return hero;
         }
 

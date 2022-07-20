@@ -21,6 +21,32 @@ namespace LuisQnaBot.Services.Sessionize
             _memoryCache = memoryCache;
         }
 
+        public async Task<IEnumerable<Session>> WhatToWatchAsync(DateTime? dateTime = null, string track = null)
+        {
+            IEnumerable<Session> sessions = await GetSessionsAsync();
+
+            if (dateTime is DateTime datetime)
+            {
+                if (datetime.Hour != 0)
+                {
+                    sessions = sessions
+                    .Where(session => (session.StartsAt <= datetime
+                                        && datetime < session.EndsAt) || session.StartsAt <= datetime.AddMinutes(10));
+                }
+                else
+                {
+                    sessions = sessions
+                           .Where(session => session.StartsAt.Day == datetime.Day);
+                }
+            }
+            if (track is not null)
+            {
+                sessions = sessions.Where(session => string.Equals(session.Room, track, StringComparison.CurrentCultureIgnoreCase));
+            }
+
+            return sessions;
+        }
+
         public async Task<IEnumerable<Session>> WhatToWatchAsync(DateTime dateTime)
         {
             IEnumerable<Session> sessions = await GetSessionsAsync();
@@ -55,16 +81,17 @@ namespace LuisQnaBot.Services.Sessionize
             {
                 if (speakers.Any(speaker => string.Equals(speaker.FullName, fullName)))
                 {
-                    return speakers.Where(speaker => string.Equals(speaker.FullName, fullName)).ToList();
+                    speakers = speakers.Where(speaker => string.Equals(speaker.FullName, fullName)).ToList();
                 }
                 else
                 {
                     speakers = speakers
                            .Where(speaker =>
                            {
+                               speaker.FullName = speaker.FullName.Count() > 19 ? speaker.FullName.Remove(speaker.FullName.LastIndexOf(' ')).TrimEnd() : speaker.FullName;
                                var speakerWithOutAccentMarks = speaker.FullName.RemoveAccentMark();
                                return speakerWithOutAccentMarks.Contains(name.RemoveAccentMark());
-                           });
+                           }).ToList();
                 }
             }
 
@@ -86,17 +113,16 @@ namespace LuisQnaBot.Services.Sessionize
 
         internal async Task<IEnumerable<Speaker>> GetSpeakersAsync(DateTime time = default)
         {
-            List<Speaker> speakers = new List<Speaker>();
             string route = "Speakers";
 
-            HttpResponseMessage response = await _client.GetAsync(route);
-
-            if (response.IsSuccessStatusCode)
+            List<Speaker> speakers = await _memoryCache.GetOrCreateAsync(route, async entry =>
             {
-                speakers = await _memoryCache.GetOrCreateAsync(route, async entry =>
+                HttpResponseMessage response = await _client.GetAsync(route);
+
+                if (response.IsSuccessStatusCode)
                 {
-                //entry.SetOptions(new MemoryCacheEntryOptions() { } )
-                speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
+                    //entry.SetOptions(new MemoryCacheEntryOptions() { } )
+                    speakers = await response.Content.ReadFromJsonAsync<List<Speaker>>();
 
                     foreach (Speaker speaker in speakers)
                     {
@@ -109,40 +135,57 @@ namespace LuisQnaBot.Services.Sessionize
                         }
                     }
                     return speakers;
-                });
+                }
+                return null;
+            });
+
+            if (speakers is null)
+            {
+                _memoryCache.Remove(route);
             }
+
             return speakers;
         }
 
         internal async Task<IEnumerable<Session>> GetSessionsAsync(bool getSpeakers = true)
         {
-            IEnumerable<Session> sessions = new List<Session>();
             string route = "Sessions";
-
-            HttpResponseMessage response = await _client.GetAsync(route);
-
-            if (response.IsSuccessStatusCode)
+            IEnumerable<Session> sessions = await _memoryCache.GetOrCreateAsync(route, async entry =>
             {
-                var sessionsResponse = await _memoryCache.GetOrCreateAsync(route, async entry =>
+
+                HttpResponseMessage response = await _client.GetAsync(route);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    var kk = await response.Content.ReadFromJsonAsync<List<SessionResponse>>();
-                    return kk;
-                });
+                    var sessionsResponse = await response.Content.ReadFromJsonAsync<List<SessionResponse>>();
+                    sessions = sessionsResponse.FirstOrDefault()?.Sessions;
 
-                sessions = sessionsResponse.FirstOrDefault()?.Sessions;
-                if (getSpeakers)
-                    foreach (Session session in sessions)
+                    if (getSpeakers)
                     {
-                        var speakerIds = session.Speakers.Select(s => s.Id).ToList();
-                        session.Speakers.Clear();
 
-                        foreach (var speakerId in speakerIds)
+                        foreach (Session session in sessions)
                         {
-                            session.Speakers.Add(await GetSpeakerByIdAsync(speakerId));
+                            var speakerIds = session.Speakers.Select(s => s.Id).ToList();
+                            session.Speakers.Clear();
+
+                            foreach (var speakerId in speakerIds)
+                            {
+                                session.Speakers.Add(await GetSpeakerByIdAsync(speakerId));
+                            }
                         }
                     }
+                    return sessions;
+                }
+                return null;
+            });
+
+            if (sessions is null)
+            {
+                _memoryCache.Remove(route);
             }
+
             return sessions;
+
         }
 
         internal async Task<Speaker> GetSpeakerByIdAsync(string id)

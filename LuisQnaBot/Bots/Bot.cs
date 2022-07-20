@@ -72,7 +72,7 @@ namespace LuisQnaBot.Bots
             {
                 if (member.Id != turnContext.Activity.Recipient.Id)
                 {
-                    await turnContext.SendActivityAsync(MessageFactory.Text($"Hola anfitriona!"), cancellationToken);
+                    await turnContext.SendActivityAsync(MessageFactory.Text($"Hola anfitriona! Puedes preguntarme por qué sesión ver; o sobre la biografía de cierta speaker."), cancellationToken);
                 }
             }
         }
